@@ -521,7 +521,7 @@
     var firstPlayerIndex = randomInt(0, state.players.length - 1);
     var order = [];
     for (var i = 0; i < state.players.length; i++) {
-      order.push((firstPlayerIndex + i) % state.players.length);
+      order.push(i);
     }
     state.round = {
       category: pick.category,

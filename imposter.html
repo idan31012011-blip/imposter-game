@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#07070c">
+<title>מתחזה</title>
+<style>
+  :root {
+    --bg: #07070c;
+    --bg-soft: #0e0f17;
+    --bg-card: #181a24;
+    --border: #2a2c3a;
+    --text: #f2f2f7;
+    --text-dim: #8d8fa3;
+    --red: #ff3355;
+    --red-glow: rgba(255, 51, 85, 0.55);
+    --cyan: #28e0ff;
+    --cyan-glow: rgba(40, 224, 255, 0.45);
+    --gold: #ffce54;
+    --green: #2fe6a0;
+    --radius: 16px;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+    overscroll-behavior: none;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at 20% 0%, rgba(255, 51, 85, 0.10), transparent 55%),
+      radial-gradient(circle at 80% 100%, rgba(40, 224, 255, 0.08), transparent 55%),
+      var(--bg);
+  }
+
+  #app { min-height: 100vh; }
+
+  button { font-family: inherit; }
+
+  .screen {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 100vh;
+    padding: max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+    animation: fadeIn 0.35s ease both;
+  }
+
+  .brand {
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    color: var(--text-dim);
+    text-align: center;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .spacer { flex: 1; }
+
+  h1, h2, p { margin: 0; }
+
+  .hint {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+  .hint.center { text-align: center; }
+
+  /* Buttons */
+  .btn {
+    min-height: 56px;
+    width: 100%;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    transition: transform 0.08s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.35; pointer-events: none; }
+
+  .btn.primary {
+    background: linear-gradient(135deg, var(--cyan), #1b8fb0);
+    color: #052028;
+    box-shadow: 0 8px 24px rgba(40, 224, 255, 0.25);
+  }
+  .btn.secondary {
+    background: var(--bg-card);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn.danger {
+    background: linear-gradient(135deg, var(--red), #a8112c);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(255, 51, 85, 0.3);
+  }
+  .btn.big { font-size: 1.15rem; }
+
+  /* Setup screen */
+  .setup-screen h1 {
+    font-size: 1.4rem;
+    text-align: center;
+    font-weight: 800;
+  }
+
+  .player-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .player-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 10px 10px 18px;
+  }
+  .player-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  .icon-btn {
+    min-width: 48px;
+    min-height: 48px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-soft);
+    color: var(--red);
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .icon-btn:active { transform: scale(0.94); }
+
+  .add-row {
+    display: flex;
+    gap: 10px;
+  }
+  .add-row input {
+    flex: 1;
+    min-width: 0;
+    min-height: 56px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+    font-size: 16px;
+    padding: 0 16px;
+  }
+  .add-row input:focus { outline: 2px solid var(--cyan); }
+  .add-row .btn { width: auto; padding: 0 22px; }
+
+  /* Pass screens */
+  .pass-card {
+    margin-top: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 36px 20px;
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+  }
+  .pass-label {
+    color: var(--text-dim);
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+  }
+  .pass-name {
+    font-size: clamp(2rem, 9vw, 2.8rem);
+    font-weight: 800;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+  .progress-dim {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
+  }
+
+  /* Word reveal screen */
+  .category-badge {
+    align-self: center;
+    border: 2px solid var(--gold);
+    color: var(--gold);
+    border-radius: 999px;
+    padding: 8px 20px;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    text-align: center;
+  }
+  .category-badge span {
+    display: block;
+    font-size: 1.15rem;
+    margin-top: 4px;
+    letter-spacing: 0.01em;
+    color: var(--text);
+  }
+  .category-badge.small { padding: 5px 16px; font-size: 0.65rem; }
+  .category-badge.small span { font-size: 0.95rem; margin-top: 2px; }
+
+  .word-display {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    text-align: center;
+  }
+  .secret-word {
+    font-size: clamp(2.2rem, 11vw, 3.2rem);
+    font-weight: 800;
+    color: var(--cyan);
+    text-shadow: 0 0 18px var(--cyan-glow);
+    letter-spacing: 0.02em;
+    overflow-wrap: anywhere;
+  }
+  .imposter-text {
+    font-size: clamp(2.4rem, 13vw, 3.6rem);
+    font-weight: 800;
+    color: var(--red);
+    letter-spacing: 0.02em;
+    text-shadow: 0 0 14px var(--red-glow), 0 0 36px var(--red-glow);
+    display: inline-block;
+    animation: glitch 1.3s infinite;
+  }
+  .imposter-sub {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    max-width: 300px;
+  }
+
+  .tap-reveal { margin-top: auto; }
+
+  /* Discussion start */
+  .big-headline {
+    font-size: clamp(1.5rem, 7vw, 2rem);
+    font-weight: 800;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .first-speaker-card {
+    background: var(--bg-card);
+    border: 1px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+  }
+  .first-speaker-card .pass-name { color: var(--gold); font-size: clamp(1.6rem, 8vw, 2.2rem); }
+
+  /* Voting */
+  .voter-roster {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+  .roster-chip {
+    font-size: 0.78rem;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    background: var(--bg-card);
+  }
+  .roster-chip.voted {
+    color: var(--green);
+    border-color: var(--green);
+  }
+
+  .vote-prompt {
+    font-size: clamp(1.2rem, 6vw, 1.6rem);
+    font-weight: 800;
+    text-align: center;
+  }
+  .vote-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .vote-option {
+    min-height: 56px;
+    width: 100%;
+    border-radius: 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .vote-option:active { transform: scale(0.97); background: var(--bg-soft); }
+
+  /* Reveal animation */
+  .reveal-anim-screen {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .countdown-number {
+    font-size: 8rem;
+    font-weight: 800;
+    color: var(--red);
+    text-shadow: 0 0 40px var(--red-glow);
+    animation: pulse 0.65s ease;
+  }
+  .flash-phase {
+    animation: flashSweep 0.65s ease forwards;
+  }
+  .flash-text {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #fff;
+  }
+
+  .result-screen { gap: 22px; }
+  .result-flicker { text-align: center; animation: scaleIn 0.5s ease both; }
+  .result-label {
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    font-size: 0.85rem;
+  }
+  .imposter-name {
+    font-size: clamp(2rem, 11vw, 3rem);
+    font-weight: 800;
+    color: var(--red);
+    text-shadow: 0 0 20px var(--red-glow);
+    animation: glitch 1.3s infinite;
+    overflow-wrap: anywhere;
+  }
+
+  .word-reveal-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    animation: scaleIn 0.5s ease 0.1s both;
+  }
+  .word-reveal-card .secret-word { font-size: clamp(1.6rem, 8vw, 2.2rem); }
+
+  .tally-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    animation: scaleIn 0.5s ease 0.2s both;
+  }
+  .tally-list {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .tally-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--bg-soft);
+    font-weight: 600;
+  }
+  .tally-row.is-imposter {
+    border: 1px solid var(--red);
+    color: var(--red);
+  }
+  .tally-count { color: var(--text-dim); font-weight: 700; }
+  .tally-row.is-imposter .tally-count { color: var(--red); }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0% { transform: scale(0.6); opacity: 0.3; }
+    60% { transform: scale(1.12); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes glitch {
+    0%, 100% { transform: translate(0, 0) skewX(0deg); filter: blur(0); }
+    10% { transform: translate(-2px, 1px) skewX(-2deg); }
+    20% { transform: translate(2px, -1px) skewX(2deg); filter: blur(0.6px); }
+    30% { transform: translate(-1px, 0) skewX(0deg); filter: blur(0); }
+    50% { transform: translate(1px, 1px); }
+    100% { transform: translate(0, 0); }
+  }
+  @keyframes flashSweep {
+    0% { background-color: #000; }
+    25% { background-color: #fff; }
+    55% { background-color: var(--red); }
+    100% { background-color: #000; }
+  }
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.75); }
+    to { opacity: 1; transform: scale(1); }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function () {
+  'use strict';
+
+  var WORD_BANK = [
+    { category: 'אוכל ושתייה', words: [
+      'פיצה', 'המבורגר', 'סושי', 'פלאפל', 'חומוס', 'שקשוקה', "ג'חנון", 'מלאווח', 'קוסקוס', 'חריימה',
+      'שניצל', 'סטייק', 'פסטה', 'לזניה', 'רביולי', 'טורטיה', 'בוריטו', 'טאקו', 'דים סאם', 'נודלס',
+      'מרק עוף', 'מרק עדשים', 'מרק בצל', 'סלט יווני', 'סלט קיסר', 'טבולה', 'קינואה', 'חביתה', 'ביצת עין', 'פנקייק',
+      'וופל בלגי', 'קרואסון', 'דונאטס', 'עוגת שוקולד', "צ'יזקייק", 'מוס שוקולד', 'גלידת וניל', 'סורבה', 'פרוזן יוגורט', 'מילקשייק',
+      'אספרסו', "קפוצ'ינו", 'תה ירוק', 'שוקו חם', 'לימונדה', 'מיץ תפוזים', 'בירה', 'יין אדום', 'וויסקי', 'קוקטייל',
+      'לחם שיפון', 'חלה', 'פיתה', 'בייגל', 'גבינה צהובה', "קוטג'", 'יוגורט', 'חמאה', 'ריבה', 'דבש',
+      'שוקולד מריר', 'סוכריה על מקל', 'מסטיק', 'ביסלי', 'במבה', "תפוצ'יפס", 'פופקורן', "נאצ'וס", 'אגוזי מלך', 'שקדים',
+      'תפוח', 'בננה', 'אפרסק', 'אבטיח', 'מלון', 'ענבים', 'תות שדה', 'אננס', 'מנגו', 'דובדבן',
+      'מלפפון', 'עגבניה', 'חסה', 'גזר', 'פלפל אדום', 'בצל', 'שום', 'תפוח אדמה', 'חציל', 'תירס',
+      'פטריות', 'זיתים', 'מלפפון חמוץ', 'קטשופ', 'מיונז', 'חרדל', 'טחינה', 'עמבה', 'סחוג', 'פסטו', 'שלשול', 'פיפי',
+      'טוסט', 'פתיתים', 'סודה', 'שווארמה', 'מעדנות', 'חמין'
+    ] },
+    { category: 'חיות', words: [
+      'אריה', 'נמר', 'פיל', "ג'ירפה", 'זברה', 'קרנף', 'היפופוטם', 'קוף', 'שימפנזה', 'גורילה',
+      'דב קוטב', 'דב פנדה', 'זאב', 'שועל', 'תן', 'צבוע', 'כלב', 'חתול', 'ארנב', 'אוגר',
+      'סוס', 'חמור', 'פרה', 'כבשה', 'עז', 'חזיר', 'תרנגול', 'ברווז', 'ברבור', 'טווס',
+      'נשר', 'ינשוף', 'תוכי', 'יונה', 'דרור', 'נחליאלי', 'עורב', 'עטלף', 'פינגווין', 'יען',
+      'נחש', 'לטאה', 'צב', 'תנין', 'צפרדע', 'קרפדה', 'זיקית', 'חרדון', 'איגואנה', 'סלמנדרה',
+      'דג זהב', 'כריש', 'דולפין', 'לוויתן', 'תמנון', 'סרטן', 'מדוזה', 'סוס ים', 'סימבה', 'בקר'
+    ] },
+    { category: 'חפצים', words: [
+      'עיפרון', 'עט', 'מחברת', 'ספר', 'תיק', 'קלמר', 'סרגל', 'מספריים', 'דבק', 'מחדד',
+      'מחשב', 'מקלדת', 'עכבר', 'מסך', 'אוזניות', 'רמקול', 'טלפון', 'מטען', 'סוללה', 'פנס',
+      'שולחן', 'כיסא', 'מיטה', 'ארון', 'מדף', 'ספה', 'שטיח', 'וילון', 'תמונה', 'שעון', 'חצוצרה', 'תופים',
+      'מנורה', 'מראה', 'מפתח', 'מנעול', 'ארנק', 'משקפיים', 'מטרייה', 'מזוודה', 'סל', 'פח', 'קקי',
+      'בנדנה', 'גולה', 'נשק', 'רובה', 'קרניים', 'מדליה', 'דגל ישראל', 'אגד', 'אזעקה'
+    ] },
+    { category: 'מקומות', words: [
+      'ישראל', 'ירושלים', 'תל אביב', 'חיפה', 'אילת', 'פריז', 'לונדון', 'ניו יורק', 'רומא', 'טוקיו',
+      'בית ספר', 'אוניברסיטה', 'גן ילדים', 'ספריה', 'מוזיאון', 'תיאטרון', 'קולנוע', 'בית חולים',
+      'מרפאה', 'תחנת משטרה', 'בנק', 'דואר', 'עירייה', 'סופרמרקט', 'קניון', 'שוק', 'מאפייה', 'מסעדה',
+      'בית קפה', 'מלון', 'פארק', 'גינה', 'יער', 'מדבר', 'הבית הלבן', 'אסותא (בית חולים)', 'מצדה',
+      'עזריאלי', 'מנהרות הכרמל', 'מוזיאון ישראל', 'בית שחי', 'רמת הגולן', 'מתנ"ס',
+      'איראן', 'ברצלונה', 'מדריד', "מנצ'סטר", 'נובה'
+    ] },
+    { category: 'מקצועות ודמויות', words: [
+      'מורה', 'גנן', 'מרצה', 'סטודנט', 'רופא', 'אחות', 'רוקח', 'שוטר', 'כבאי', 'חייל',
+      'טייס', 'דייל', 'נהג', 'ספן', 'אסטרונאוט', 'חוקר', 'עורך דין', 'שופט', 'סופר',
+      'צייר', 'זמר', 'נגן', 'רקדן', 'במאי', 'אדריכל', 'מתכנת', 'מדען', 'טבח', 'שף', 'ראש הממשלה', 'הנשיא', 'טראמפ', 'מסי',
+      'מלצר', 'אופה', 'ספר', 'תופר', 'מוכר', 'קופאי', 'שליח', 'מציל', 'מאמן', 'שחייה', 'כדורגל', 'טניס', 'רוצח', 'גנב', 'כדוריד', 'ריצה', 'משחק',
+      'קמצן', 'צמחוני', 'מפלגה', 'עיצוב פנים', 'שלמה המלך', 'נועה קירל', 'אנה זק', 'ביבי', 'יאיר לפיד', 'ביונסה', 'טיילור סוויפט', 'טוני סופרנוס', 'אמבפה',
+      'בילי אייליש', "רייצ'ל גרין", 'גולדה מאיר', 'הרצל', 'אדם וחווה', 'דוד בן גוריון', 'קנייה וואסט', "ג'רי סיינפלד", 'סטיב', 'אייל גולן', 'עומר אדם', 'איתי לוי', 'עדן בן זקן',
+      'חיילים', 'מישל', 'חמינאי', 'למאל', 'ברסה'
+    ] },
+    { category: 'טכנולוגיה ומושגים', words: [
+      'אינטרנט', 'וויפיי', 'פייסבוק', 'אינסטגרם', 'טיקטוק', 'וואטסאפ', 'יוטיוב', 'גוגל', 'אפליקציה', 'תוכנה',
+      'בינה מלאכותית', 'רובוט', 'הולוגרמה', 'לייזר', 'לוויין', 'זמן', 'עתיד', 'עבר', 'הווה', 'חלום',
+      'זיכרון', 'אהבה', 'חופש', 'שלום', 'מלחמה', 'מוזיקה', 'אמנות', 'מדע', 'היסטוריה', 'מתמטיקה', 'פיזיקה', 'כימיה', 'קצב', 'תורה',
+      'אקליפטוס', 'ביטוח לאומי', 'ברכה', 'סיפור', 'הרצאה', 'עזרה ראשונה', 'ללכת לאיבוד', 'ארץ עיר (המשחק)', 'רשיון נשק', 'שוט גן', 'סבלנות', 'תיבת נח', 'מרד', 'מרחק', 'ענף', 'עין הרע', 'טודו בום', 'כדור הארץ',
+      'כטב"מים', 'דלולו', 'מילואים', 'יוקר המחיה', 'חרבות ברזל', 'חוסן', 'חזית', 'התרעה', 'הפגנות', 'הסלמה', 'הסברה', "רייג'בייט", 'פילטר', 'ניצחון', 'סנקציות', '67', 'אירוויזיון', 'משחקי הכס',
+      'חוצפה', 'קומבינה', 'תכלס', 'יאללה', 'באסה', 'סבבה', 'אחי', 'גבר', 'נשמה', 'כפרה', 'חביבי', 'חאלס', 'בלגן', 'פדיחה'
+    ] }
+  ];
+
+  var state = {
+    screen: 'setup',
+    players: [],
+    round: null
+  };
+
+  var appEl = document.getElementById('app');
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function pickWord() {
+    var entry = WORD_BANK[randomInt(0, WORD_BANK.length - 1)];
+    var word = entry.words[randomInt(0, entry.words.length - 1)];
+    return { category: entry.category, word: word };
+  }
+
+  function startRound() {
+    var pick = pickWord();
+    var imposterIndex = randomInt(0, state.players.length - 1);
+    var firstPlayerIndex = randomInt(0, state.players.length - 1);
+    var order = [];
+    for (var i = 0; i < state.players.length; i++) {
+      order.push((firstPlayerIndex + i) % state.players.length);
+    }
+    state.round = {
+      category: pick.category,
+      word: pick.word,
+      imposterIndex: imposterIndex,
+      firstPlayerIndex: firstPlayerIndex,
+      order: order,
+      revealStep: 0,
+      revealed: false,
+      voteStep: 0,
+      voteGateOpen: false,
+      voted: {}
+    };
+    state.screen = 'reveal';
+    render();
+  }
+
+  function getTally() {
+    var voted = state.round.voted;
+    return state.players.map(function (name, i) {
+      var votes = 0;
+      Object.keys(voted).forEach(function (k) { if (voted[k] === i) votes++; });
+      return { index: i, name: name, votes: votes };
+    }).sort(function (a, b) { return b.votes - a.votes; });
+  }
+
+  function tickCountdown() {
+    setTimeout(function () {
+      if (!state.round || !state.round.revealAnim) return;
+      if (state.round.revealAnim.count > 1) {
+        state.round.revealAnim.count--;
+        render();
+        tickCountdown();
+      } else {
+        state.round.revealAnim.phase = 'flash';
+        render();
+        setTimeout(function () {
+          if (!state.round || !state.round.revealAnim) return;
+          state.round.revealAnim.phase = 'result';
+          render();
+        }, 650);
+      }
+    }, 650);
+  }
+
+  function handleAction(action, arg) {
+    switch (action) {
+      case 'addPlayer': {
+        var input = document.getElementById('newPlayerInput');
+        var name = input.value.trim();
+        if (name) state.players.push(name);
+        render();
+        var refocused = document.getElementById('newPlayerInput');
+        if (refocused) refocused.focus();
+        break;
+      }
+      case 'removePlayer':
+        state.players.splice(parseInt(arg, 10), 1);
+        render();
+        break;
+      case 'startRound':
+        if (state.players.length >= 3) startRound();
+        break;
+      case 'tapReveal':
+        state.round.revealed = true;
+        render();
+        break;
+      case 'doneReveal':
+        state.round.revealStep++;
+        state.round.revealed = false;
+        if (state.round.revealStep >= state.players.length) {
+          state.screen = 'discussionStart';
+        }
+        render();
+        break;
+      case 'goToVoting':
+        state.screen = 'voting';
+        render();
+        break;
+      case 'tapBeginVote':
+        state.round.voteGateOpen = true;
+        render();
+        break;
+      case 'castVote': {
+        var voterIdx = state.round.order[state.round.voteStep];
+        state.round.voted[voterIdx] = parseInt(arg, 10);
+        state.round.voteStep++;
+        state.round.voteGateOpen = false;
+        if (state.round.voteStep >= state.players.length) {
+          state.screen = 'votingComplete';
+        }
+        render();
+        break;
+      }
+      case 'startRevealAnim':
+        state.screen = 'revealAnim';
+        state.round.revealAnim = { phase: 'countdown', count: 3 };
+        render();
+        tickCountdown();
+        break;
+      case 'newRound':
+        state.round = null;
+        state.screen = 'setup';
+        render();
+        break;
+    }
+  }
+
+  appEl.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    handleAction(btn.dataset.action, btn.dataset.arg);
+  });
+
+  appEl.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && e.target.id === 'newPlayerInput') {
+      e.preventDefault();
+      handleAction('addPlayer');
+    }
+  });
+
+  function renderSetup() {
+    var needed = 3 - state.players.length;
+    return (
+      '<div class="screen setup-screen">' +
+        '<p class="brand">מתחזה</p>' +
+        '<h1>שחקנים</h1>' +
+        '<ul class="player-list">' +
+          state.players.map(function (p, i) {
+            return '<li class="player-row">' +
+              '<span class="player-name">' + escapeHtml(p) + '</span>' +
+              '<button class="icon-btn" data-action="removePlayer" data-arg="' + i + '" aria-label="הסר את ' + escapeHtml(p) + '">&#10005;</button>' +
+            '</li>';
+          }).join('') +
+        '</ul>' +
+        (state.players.length === 0 ? '<p class="hint center">הוסיפו לפחות 3 שחקנים כדי להתחיל.</p>' : '') +
+        '<div class="add-row">' +
+          '<input id="newPlayerInput" type="text" placeholder="שם שחקן" maxlength="20" autocomplete="off" />' +
+          '<button type="button" class="btn secondary" data-action="addPlayer">הוספה</button>' +
+        '</div>' +
+        '<div class="spacer"></div>' +
+        (needed > 0 ? '<p class="hint center">' + (needed === 1 ? 'עוד שחקן אחד נדרש' : 'עוד ' + needed + ' שחקנים נדרשים') + '</p>' : '') +
+        '<button type="button" class="btn primary big" data-action="startRound"' + (state.players.length < 3 ? ' disabled' : '') + '>התחל סבב</button>' +
+      '</div>'
+    );
+  }
+
+  function renderReveal() {
+    var round = state.round;
+    var idx = round.order[round.revealStep];
+    var name = state.players[idx];
+    var isImposter = idx === round.imposterIndex;
+
+    if (!round.revealed) {
+      return (
+        '<div class="screen pass-screen">' +
+          '<p class="brand">מתחזה</p>' +
+          '<p class="progress-dim">שחקן ' + (round.revealStep + 1) + ' מתוך ' + state.players.length + '</p>' +
+          '<div class="pass-card">' +
+            '<p class="pass-label">תעבירו את הטלפון ל</p>' +
+            '<h1 class="pass-name">' + escapeHtml(name) + '</h1>' +
+          '</div>' +
+          '<button type="button" class="btn primary big tap-reveal" data-action="tapReveal">הקש לחשיפה</button>' +
+        '</div>'
+      );
+    }
+
+    return (
+      '<div class="screen reveal-word-screen">' +
+        '<p class="brand">מתחזה</p>' +
+        '<div class="category-badge">קטגוריה<span>' + escapeHtml(round.category) + '</span></div>' +
+        (isImposter ?
+          '<div class="word-display"><span class="imposter-text">מתחזה</span><p class="imposter-sub">אתם לא מכירים את המילה. נסו לבלף את כולם בדיון!</p></div>' :
+          '<div class="word-display"><span class="secret-word">' + escapeHtml(round.word) + '</span></div>'
+        ) +
+        '<p class="hint center">שננו את המילה, ואז הסתירו את המסך לפני שמעבירים.</p>' +
+        '<button type="button" class="btn primary big" data-action="doneReveal">סיימתי &mdash; להעביר לשחקן הבא</button>' +
+      '</div>'
+    );
+  }
+
+  function renderDiscussionStart() {
+    var round = state.round;
+    return (
+      '<div class="screen discussion-screen">' +
+        '<p class="brand">מתחזה</p>' +
+        '<h1 class="big-headline">כולם מוכנים &mdash;<br>מתחילים בדיון!</h1>' +
+        '<div class="first-speaker-card">' +
+          '<p class="pass-label">פותח/ת בדיון</p>' +
+          '<h2 class="pass-name">' + escapeHtml(state.players[round.firstPlayerIndex]) + '</h2>' +
+        '</div>' +
+        '<p class="hint center">שוחחו ונסו לגלות מי המתחזה. אין הגבלת זמן &mdash; בקצב שלכם.</p>' +
+        '<div class="spacer"></div>' +
+        '<button type="button" class="btn primary big" data-action="goToVoting">למעבר להצבעה</button>' +
+      '</div>'
+    );
+  }
+
+  function renderRoster() {
+    var voted = state.round.voted;
+    return '<div class="voter-roster">' +
+      state.players.map(function (p, i) {
+        var hasVoted = Object.prototype.hasOwnProperty.call(voted, i);
+        return '<span class="roster-chip' + (hasVoted ? ' voted' : '') + '">' + (hasVoted ? '&#10003; ' : '') + escapeHtml(p) + '</span>';
+      }).join('') +
+    '</div>';
+  }
+
+  function renderVoting() {
+    var round = state.round;
+    var votedCount = Object.keys(round.voted).length;
+    var voterIdx = round.order[round.voteStep];
+    var name = state.players[voterIdx];
+
+    if (!round.voteGateOpen) {
+      return (
+        '<div class="screen pass-screen">' +
+          '<p class="brand">מתחזה</p>' +
+          '<p class="progress-dim">' + votedCount + ' / ' + state.players.length + ' הצביעו</p>' +
+          renderRoster() +
+          '<div class="pass-card">' +
+            '<p class="pass-label">תעבירו את הטלפון ל</p>' +
+            '<h1 class="pass-name">' + escapeHtml(name) + '</h1>' +
+          '</div>' +
+          '<button type="button" class="btn primary big" data-action="tapBeginVote">הקש כדי להצביע</button>' +
+        '</div>'
+      );
+    }
+
+    return (
+      '<div class="screen vote-screen">' +
+        '<p class="brand">מתחזה</p>' +
+        '<p class="progress-dim">' + votedCount + ' / ' + state.players.length + ' הצביעו</p>' +
+        '<h2 class="vote-prompt">' + escapeHtml(name) + ', מי המתחזה לדעתך?</h2>' +
+        '<div class="vote-grid">' +
+          state.players.map(function (p, i) {
+            return '<button type="button" class="vote-option" data-action="castVote" data-arg="' + i + '">' + escapeHtml(p) + '</button>';
+          }).join('') +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function renderVotingComplete() {
+    return (
+      '<div class="screen discussion-screen">' +
+        '<p class="brand">מתחזה</p>' +
+        '<h1 class="big-headline">כל ההצבעות נספרו!</h1>' +
+        renderRoster() +
+        '<p class="hint center">' + state.players.length + ' / ' + state.players.length + ' הצביעו</p>' +
+        '<div class="spacer"></div>' +
+        '<button type="button" class="btn danger big" data-action="startRevealAnim">לחשוף את המתחזה</button>' +
+      '</div>'
+    );
+  }
+
+  function renderRevealAnim() {
+    var round = state.round;
+    var anim = round.revealAnim;
+
+    if (anim.phase === 'countdown') {
+      return (
+        '<div class="screen reveal-anim-screen">' +
+          '<p class="hint center">חושפים בעוד&hellip;</p>' +
+          '<div class="countdown-number">' + anim.count + '</div>' +
+        '</div>'
+      );
+    }
+
+    if (anim.phase === 'flash') {
+      return (
+        '<div class="screen reveal-anim-screen flash-phase">' +
+          '<div class="flash-text">חושפים&hellip;</div>' +
+        '</div>'
+      );
+    }
+
+    var tally = getTally();
+    return (
+      '<div class="screen result-screen">' +
+        '<div class="result-flicker">' +
+          '<p class="result-label">המתחזה:</p>' +
+          '<h1 class="imposter-name">' + escapeHtml(state.players[round.imposterIndex]) + '</h1>' +
+        '</div>' +
+        '<div class="word-reveal-card">' +
+          '<p class="pass-label">המילה הסודית הייתה</p>' +
+          '<div class="category-badge small">קטגוריה<span>' + escapeHtml(round.category) + '</span></div>' +
+          '<h2 class="secret-word">' + escapeHtml(round.word) + '</h2>' +
+        '</div>' +
+        '<div class="tally-card">' +
+          '<p class="pass-label">הצבעות</p>' +
+          '<ul class="tally-list">' +
+            tally.map(function (t) {
+              return '<li class="tally-row' + (t.index === round.imposterIndex ? ' is-imposter' : '') + '">' +
+                '<span>' + escapeHtml(t.name) + '</span>' +
+                '<span class="tally-count">' + (t.votes === 1 ? 'הצבעה אחת' : t.votes + ' הצבעות') + '</span>' +
+              '</li>';
+            }).join('') +
+          '</ul>' +
+        '</div>' +
+        '<button type="button" class="btn primary big" data-action="newRound">סבב חדש</button>' +
+      '</div>'
+    );
+  }
+
+  function render() {
+    var html = '';
+    switch (state.screen) {
+      case 'setup': html = renderSetup(); break;
+      case 'reveal': html = renderReveal(); break;
+      case 'discussionStart': html = renderDiscussionStart(); break;
+      case 'voting': html = renderVoting(); break;
+      case 'votingComplete': html = renderVotingComplete(); break;
+      case 'revealAnim': html = renderRevealAnim(); break;
+    }
+    appEl.innerHTML = html;
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
